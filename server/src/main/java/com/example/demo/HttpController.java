@@ -8,7 +8,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
@@ -48,7 +50,21 @@ public class HttpController extends HttpServlet {
 	}
 	
 	
-	public boolean saveUser() {
-		return false;
+	@PostMapping("/user/save")
+	public boolean saveUser(@RequestParam String login, @RequestParam String password) {
+		
+		User user = new User();
+		
+		user.login = login;
+		user.password = password;
+		
+		try {
+			userRepository.save(user);
+		} catch(Exception e) {
+			return false;
+		}
+		
+		
+		return true;
 	}
 }
