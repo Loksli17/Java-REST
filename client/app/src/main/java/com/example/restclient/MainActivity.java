@@ -14,13 +14,16 @@ import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.POST;
 import retrofit2.http.Query;
 
 interface ServerService {
 
     @GET("/index")
-    Call<Answer> index();
+    Call<com.example.restclient.Answer> index();
 }
 
 
@@ -39,7 +42,23 @@ class User {
 interface UserService {
 
     @GET("/user/get-one")
-    Call<User> getOne(@Query("id") int id);
+    Call<com.example.restclient.User> getOne(@Query("id") int id);
+
+    @FormUrlEncoded
+    @POST("user/save")
+    Call<Boolean> save(@Field("login") String login, @Field("password") String password);
+}
+
+
+
+class UserDto {
+    public int id;
+}
+
+interface HttpService {
+
+    @GET("/index")
+    Call<com.example.restclient.UserDto> index();
 }
 
 
@@ -51,18 +70,46 @@ public class MainActivity extends AppCompatActivity {
             .build();
 
 
+    public class RequestToServer extends AsyncTask<String, String, String> {
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            com.example.restclient.HttpService httpService = retrofit.create(com.example.restclient.HttpService.class);
+
+            Call<com.example.restclient.UserDto> call = httpService.index();
+
+            try {
+                Response<com.example.restclient.UserDto> response = call.execute();
+                com.example.restclient.UserDto userDto = response.body();
+
+                runOnUiThread(() -> {
+                    TextView textView = findViewById(R.id.answerView);
+
+                    textView.setText(String.valueOf(userDto.id));
+                });
+
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+
     public class Request extends AsyncTask<String, String, String> {
 
         @Override
         protected String doInBackground(String... strings) {
 
-            ServerService serverService = retrofit.create(ServerService.class);
+            com.example.restclient.ServerService serverService = retrofit.create(com.example.restclient.ServerService.class);
 
-            Call<Answer> call = serverService.index();
+            Call<com.example.restclient.Answer> call = serverService.index();
 
             try {
-                Response<Answer> response = call.execute();
-                Answer answer = response.body();
+                Response<com.example.restclient.Answer> response = call.execute();
+                com.example.restclient.Answer answer = response.body();
 
                 runOnUiThread(() -> {
                     TextView textView = findViewById(R.id.answerView);
@@ -84,13 +131,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... strings) {
 
-            UserService serverService = retrofit.create(UserService.class);
+            com.example.restclient.UserService userService = retrofit.create(com.example.restclient.UserService.class);
 
-            Call<User> call = serverService.getOne(1);
+            Call<com.example.restclient.User> call = userService.getOne(1);
 
             try {
-                Response<User> response = call.execute();
-                User user = response.body();
+                Response<com.example.restclient.User> response = call.execute();
+                com.example.restclient.User user = response.body();
 
                 runOnUiThread(() -> {
                     TextView textView = findViewById(R.id.answerView);
@@ -107,6 +154,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public class SaveUser extends AsyncTask<String, String, String> {
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            com.example.restclient.UserService userService = retrofit.create(com.example.restclient.UserService.class);
+
+            Call<Boolean> call = userService.save("login", "123");
+
+            try {
+                Response<Boolean> response = call.execute();
+                Boolean result = response.body();
+
+                runOnUiThread(() -> {
+                    TextView textView = findViewById(R.id.answerView);
+
+                    Toast.makeText(com.example.restclient.MainActivity.this, "New user has saved", Toast.LENGTH_SHORT);
+                });
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
 
 
     @Override
@@ -114,6 +186,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        new GetUserReq().execute("");
+        new com.example.restclient.MainActivity.GetUserReq().execute("");
+
+//        new RequestToServer().execute("");
+
+        findViewById(R.id.button).setOnClickListener((view) -> {
+            new com.example.restclient.MainActivity.SaveUser().execute("");
+        });
     }
 }
